@@ -5,13 +5,20 @@ def mround(x, multiple):
     return [round(n / multiple) * multiple for n in x]
 
 class IntermittentDemand:
-    def __init__(self, rate, stdev, mean):
-        self.rate = rate # poisson rate, i.e. lambda (Poisson)
-        self.stdev = stdev  # standard deviation (normal)
-        self.mean = mean    # mean (normal)
+    """
+    This class generates intermittent demand using a Poisson distribution for the number of purchase orders (POs)
+    and a normal distribution for the units per PO."
+    """
 
-    def generate(self, n):
-        rng = np.random.default_rng(seed = 2) #random number generator
+    def __init__(self, rate, mean, stdev):
+        self.rate = rate # poisson rate, i.e. lambda
+        self.mean = mean    # mean (normal distribution)
+        self.stdev = stdev  # standard deviation (normal distribution)
+
+    def generate(self, n, seed = None):
+        # Returns total units demanded for n perids
+
+        rng = np.random.default_rng(seed = seed) #random number generator
 
         pos = []
         pos_units = []
@@ -39,6 +46,12 @@ class IntermittentDemand:
         print(pos_totals)
         return pos_totals
 
-example = IntermittentDemand(rate = 0.4, stdev = 100, mean = 100)
+example = IntermittentDemand(rate = 0.4, mean = 100, stdev = 100)
 example.generate(20)
 
+
+ON = IntermittentDemand(rate = 0.4, mean = 1000, stdev = 100)
+SK = IntermittentDemand(rate = 0.4, mean = 100, stdev = 10)
+
+ON.generate(1)
+SK.generate(1)
