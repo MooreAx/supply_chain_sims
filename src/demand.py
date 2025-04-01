@@ -42,9 +42,9 @@ class IntermittentDemand:
             #get total units
             pos_totals.append(sum(po_units))
 
-        print(pos)
-        print(pos_units)
-        print(pos_totals)
+        #print(pos)
+        #print(pos_units)
+        #print(pos_totals)
         return pos_totals
 
 '''
