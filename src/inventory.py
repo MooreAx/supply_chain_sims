@@ -11,14 +11,6 @@ class Lot:
         self.qtyavailable = size
         self.qtysold = 0
     
-    @property
-    def available(self):
-        return simdate >= self.dateavailable #simdate global variable
-    
-    @property
-    def age(self):
-        return simdate - self.dateavailable #simdate global variable
-    
     #Methods
     def makesale(self, qty):
         if not self.available:
@@ -29,6 +21,12 @@ class Lot:
             self.qtyavailable -= qty
             self.qtysold += qty
 
+    def available(self, simdate: int):
+        return simdate >= self.dateavailable
+
+    def age(self, simdate: int):
+        return simdate - self.dateavailable
+
     def __repr__(self):
         return f"Lot(id={self.id}, size={self.size}, thc={self.thc}, leadtime={self.leadtime}, dateordered={self.dateordered})"
     
@@ -37,32 +35,39 @@ class Inventory:
     def __init__(self):
         self.lots = [] #list of Lot objects
 
-    def replenish(self, qty, thc, leadtime):
+    def replenish(self, qty: int, thc: float, leadtime: int, simdate: int):
         #create a new lot and add it to the inventory
-        lot = Lot(id=len(self.lots), size=qty, thc=thc, leadtime=leadtime, dateordered=simdate) #simdate global variable
+        lot = Lot(id=len(self.lots), size=qty, thc=thc, leadtime=leadtime, dateordered=simdate)
         self.lots.append(lot)
         return lot
     
-    def sell_fifo(self, demand):
+    def qtyavailable(self, max_age: int, simdate: int):
+        total = 0
+        for lot in self.lots:
+            if lot.available(simdate) and lot.age(simdate) <= max_age:
+                total += lot.qtyavailable
+        return total
+    
+    def sell_fifo(self, demand, fresh, simdate):
         #make a sale from the oldest lots
-        self.lots.sort(key=lambda lot: lot.age, reverse=True) #oldest first
-        return self.fill_order(demand)
+        self.lots.sort(key=lambda lot: lot.age(simdate), reverse=True) #oldest first
+        return self.fill_order(demand, fresh, simdate)
         
-    def sell_lifo(self, demand):
+    def sell_lifo(self, demand, fresh, simdate: int):
         #make a sale from the newest lots
-        self.lots.sort(key=lambda lot: lot.age, reverse=False) #youngest first
-        return self.fill_order(demand)
+        self.lots.sort(key=lambda lot: lot.age(simdate), reverse=False) #youngest first
+        return self.fill_order(demand, fresh)
 
-    def sell_bifo(self, demand):
+    def sell_bifo(self, demand, fresh):
         #make a sale from highest-thc lots
         self.lots.sort(key=lambda lot: lot.thc, reverse=True) #highest thc first
-        return self.fill_order(demand)
+        return self.fill_order(demand, fresh)
 
-    def fill_order(self, demand):
+    def fill_order(self, demand, fresh, simdate):
         unfilled = demand
         filled = 0
         for lot in self.lots:
-            if lot.available:
+            if lot.available(simdate) and lot.age(simdate) <= fresh:
                 if lot.qtyavailable >= unfilled:
                     lot.makesale(unfilled)
                     filled += unfilled

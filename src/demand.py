@@ -10,10 +10,11 @@ class IntermittentDemand:
     and a normal distribution for the units per PO."
     """
 
-    def __init__(self, rate, mean, stdev):
+    def __init__(self, rate, mean, stdev, fresh):
         self.rate = rate # poisson rate, i.e. lambda
         self.mean = mean    # mean (normal distribution)
         self.stdev = stdev  # standard deviation (normal distribution)
+        self.fresh = fresh
 
     def generate(self, n, seed = None):
         # Returns total units demanded for n perids
@@ -46,12 +47,18 @@ class IntermittentDemand:
         print(pos_totals)
         return pos_totals
 
-example = IntermittentDemand(rate = 0.4, mean = 100, stdev = 100)
+'''
+
+example = IntermittentDemand(rate = 0.4, mean = 100, stdev = 100, fresh=30)
 example.generate(20)
 
 
-ON = IntermittentDemand(rate = 0.4, mean = 1000, stdev = 100)
-SK = IntermittentDemand(rate = 0.4, mean = 100, stdev = 10)
+ON = IntermittentDemand(rate = 0.4, mean = 1000, stdev = 100, fresh=30)
+SK = IntermittentDemand(rate = 0.4, mean = 100, stdev = 10, fresh=30)
 
 ON.generate(1)
 SK.generate(1)
+
+print(SK.fresh)
+
+'''
