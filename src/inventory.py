@@ -1,9 +1,4 @@
-class Simulation:
-    def __init__(self):
-        self.date = 0
-    
-    def advance_time(self, increment=1):
-        self.date += increment
+from .simulation import Simulation
 
 class Lot:
     def __init__(self, id, sim: Simulation, size, thc, leadtime):
