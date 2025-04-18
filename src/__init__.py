@@ -7,8 +7,8 @@ this enables relative imports within src
 
 #preloading modules using relative imports
 
-from .inventory import Lot, Inventory
-from .demand import IntermittentDemand
+from .inventory import Lot, Inventory 
+from .demand import IntermittentDemand, AggregateDemand
 from .simulation import Simulation
 
 

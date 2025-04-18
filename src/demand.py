@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from collections import defaultdict
 
 def mround(x, multiple):
     return [round(n / multiple) * multiple for n in x]
@@ -10,11 +11,13 @@ class IntermittentDemand:
     and a normal distribution for the units per PO."
     """
 
-    def __init__(self, rate, mean, stdev, fresh):
+    def __init__(self, customer, rate, mean, stdev, fresh, fcbias = 0):
+        self.customer = customer
         self.rate = rate # poisson rate, i.e. lambda
         self.mean = mean    # mean (normal distribution)
         self.stdev = stdev  # standard deviation (normal distribution)
         self.fresh = fresh
+        self.fcbias = fcbias
 
     def generate(self, n, seed = None):
         # Returns total units demanded for n perids
@@ -24,6 +27,7 @@ class IntermittentDemand:
         pos = []
         pos_units = []
         pos_totals = []
+        fcst = [self.rate * self.mean * (1 + self.fcbias)] * n #forecast demand, inclusive of bias
 
         for _ in range (n):
             #get pos per period (Poisson)
@@ -42,23 +46,47 @@ class IntermittentDemand:
             #get total units
             pos_totals.append(sum(po_units))
 
-        #print(pos)
-        #print(pos_units)
-        #print(pos_totals)
-        return pos_totals
+        return {"demand": pos_totals, "forecast": fcst, "fresh": self.fresh, "customer": self.customer} #return as dictionary
 
-'''
+class AggregateDemand:
+    #This class aggregates demand from multiple customers.
 
-example = IntermittentDemand(rate = 0.4, mean = 100, stdev = 100, fresh=30)
-example.generate(20)
+    def __init__(self):
+        self.components = []
 
+    def add(self, demand):
+        self.components.append(demand)
+    
+    @property
+    def aggregate_demand(self):
+        # Returns total demand for all customers
 
-ON = IntermittentDemand(rate = 0.4, mean = 1000, stdev = 100, fresh=30)
-SK = IntermittentDemand(rate = 0.4, mean = 100, stdev = 10, fresh=30)
+        aggregated = defaultdict(lambda: np.zeros(len(self.components[0]["demand"]), dtype=int))
 
-ON.generate(1)
-SK.generate(1)
+        for entry in self.components:
+            aggregated[entry["fresh"]] += np.array(entry["demand"])
+        
+        result = {fresh: demand.tolist() for fresh, demand in aggregated.items()}
+        return result
+    
+    @property
+    def aggregate_forecast(self):
+        # Returns total demand for all customers
 
-print(SK.fresh)
+        aggregated = defaultdict(lambda: np.zeros(len(self.components[0]["forecast"]), dtype=float))
 
-'''
+        for entry in self.components:
+            aggregated[entry["fresh"]] += np.array(entry["forecast"])
+        
+        result = {fresh: forecast.tolist() for fresh, forecast in aggregated.items()}
+        return result
+    
+    @property
+    def LCD_fresh(self):
+        #lowest common demoniator for fresh requirements
+        return min(component["fresh"] for component in self.components)
+    
+    @property
+    def mean_total_demand(self):
+        #total mean demand for all customers
+        return sum(component["mean"] for component in self.components)

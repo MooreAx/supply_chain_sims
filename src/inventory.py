@@ -1,4 +1,5 @@
 from .simulation import Simulation
+import copy
 
 class Lot:
     def __init__(self, id, sim: Simulation, size, thc, leadtime):
@@ -13,6 +14,16 @@ class Lot:
         self.qtysold = 0
         self.dateordered = self.sim.date
         self.dateavailable = self.dateordered + self.leadtime
+
+    def __deepcopy__(self, memo):
+        # Note: sim must be deepcopied externally before Inventory copies lots
+        new_lot = Lot(self.id, sim=memo['sim'], size=self.size, thc=self.thc, leadtime=self.leadtime)
+        new_lot.qtyavailable = self.qtyavailable
+        new_lot.qtysold = self.qtysold
+        new_lot.dateordered = self.dateordered
+        new_lot.dateavailable = self.dateavailable
+        return new_lot
+
     
     #Methods
     def makesale(self, qty):
@@ -40,6 +51,13 @@ class Inventory:
     def __init__(self, sim: Simulation):
         self.sim = sim
         self.lots = [] #list of Lot objects
+
+    def __deepcopy__(self, memo):
+        new_sim = copy.deepcopy(self.sim, memo) #copy the sim object
+        memo['sim'] = new_sim  # So each Lot uses the same copied sim
+        new_inv = Inventory(sim=new_sim)
+        new_inv.lots = [copy.deepcopy(lot, memo) for lot in self.lots]
+        return new_inv
 
     def replenish(self, qty: int, thc: float, leadtime: int):
         #create a new lot and add it to the inventory
