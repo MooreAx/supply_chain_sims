@@ -102,6 +102,14 @@ class Inventory:
                     lot.makesale(lot.qtyavailable) #must be after tallying sale
         return unfilled
 
+    def print_inventory(self):
+        for lot in self.lots:
+            print(f"Lot ID: {lot.id:>3}, Qty Produced: {lot.size}, THC: {lot.thc}, Leadtime: {lot.leadtime}, Date Ordered: {lot.dateordered:>4}, Qty Available: {lot.qtyavailable:>5}, Qty Sold: {lot.qtysold:>5}, Date Available: {lot.dateavailable:>4}, Age: {lot.age:>4}")
+        print(f"Lots produced =  {max(lot.id for lot in self.lots)}")
+        print(f"Units produced = {sum(lot.size for lot in self.lots)}")
+        print(f"Units sold =     {sum(lot.qtysold for lot in self.lots)}")
+        print(f"E&O fraction =   {round((sum(lot.qtyavailable for lot in self.lots if lot.age > 50))/(sum(lot.size for lot in self.lots)),3)}")
+
     def __repr__(self):
         return f"Inventory(lots={self.lots})"
     
