@@ -1,4 +1,3 @@
-import random
 import numpy as np
 from collections import defaultdict
 
@@ -8,7 +7,9 @@ def mround(x, multiple):
 class IntermittentDemand:
     """
     This class generates intermittent demand using a Poisson distribution for the number of purchase orders (POs)
-    and a normal distribution for the units per PO."
+    and a normal distribution for the units per PO.
+
+    THIS IS A COMPOUND POISSON PROCESS.
     """
 
     def __init__(self, customer, rate, mean, stdev, fresh, fcbias = 0):
@@ -46,12 +47,18 @@ class IntermittentDemand:
             #get total units
             pos_totals.append(sum(po_units))
 
-        return {"demand": pos_totals, "forecast": fcst, "fresh": self.fresh, "customer": self.customer} #return as dictionary
+        return {"demand": pos_totals, "forecast": fcst, "fresh": self.fresh, "customer": self.customer, "mean": self.rate * self.mean} #return as dictionary
+
+    def variance_per_period(self):
+        #variance of demand during lead time
+        return self.rate * (self.mean**2 + self.stdev**2)
 
 class AggregateDemand:
     #This class aggregates demand from multiple customers.
 
     def __init__(self):
+        #this stores instances of IntermittentDemand.generate()
+        #each entry in the list is a dictionary with keys: demand, forecast, fresh, customer, mean
         self.components = []
 
     def add(self, demand):
