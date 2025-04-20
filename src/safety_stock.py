@@ -1,12 +1,13 @@
 import scipy.stats as st
 from .demand import IntermittentDemand, AggregateDemand
+from collections import defaultdict
 
-def get_safetystock_1(intdmd, leadtime, service_level):
+def get_safetystock_1(intdmdlist, leadtime, service_level):
     #calculates safety stock for total demand, ignoring freshness requirement
 
     total_variance = 0
     total_mean = 0
-    for component in intdmd:
+    for component in intdmdlist:
         total_variance += component.variance_per_period()
         total_mean += component.mean * component.rate #mean demand per period
 
@@ -27,6 +28,22 @@ def get_safetystock_1(intdmd, leadtime, service_level):
     
     return ss
 
-def get_safetystock_2(intdmd, leadtime, service_level):
+def get_safetystock_2(intdmdlist, leadtime, service_level):
     #calculates safety stock per freshness requirement
-    pass
+    
+    #group intdmdlist by freshness - creates a dict with freshness req't as key
+    freshgroups = defaultdict(list)
+    for d in intdmdlist:
+        freshgroups[d.fresh].append(d)
+
+    ss_by_fresh = {} #dict for storing results
+
+    for fresh, components in freshgroups.items(): #freshgrop.items() returns a list of tuples: [(fresh, [list of components])]
+        #calculate total variance and mean for this freshness group
+        ss = get_safetystock_1(components, leadtime, service_level)
+
+        ss_by_fresh[fresh] = ss
+        print(f"Safety stock for freshness {fresh} = {ss}")
+
+    return ss_by_fresh
+

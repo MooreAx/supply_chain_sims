@@ -6,12 +6,19 @@ import pandas as pd
 #define demand
 ON = IntermittentDemand(customer = "ON", rate = 0.3, mean = 1000, stdev = 100, fresh=12, fcbias = 0) #12 weeks fresh = 90 days
 SK = IntermittentDemand(customer = "SK", rate = 1, mean = 50, stdev = 10, fresh=50, fcbias = 0) #12 weeks fresh = 90 days
+MB = IntermittentDemand(customer = "MB", rate = 1, mean = 50, stdev = 10, fresh=50, fcbias = 0) #12 weeks fresh = 90 days
+
 
 IntDemand_list = []
 IntDemand_list.append(ON)
 IntDemand_list.append(SK)
+IntDemand_list.append(MB)
 
 ss = get_safetystock_1(IntDemand_list, leadtime=4, service_level=0.95)
+
+print("\n running ss2")
+ss2 = get_safetystock_2(IntDemand_list, leadtime=4, service_level=0.95)
+
 #i think we need to do safety stock per freshness requirement, not just total demand,
 #and then reorder if onhand is less than ss for any of the components.
 
