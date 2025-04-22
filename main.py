@@ -3,16 +3,25 @@
 from src import *
 import pandas as pd
 
+sim_length = 1000 #weeks
+
 #define demand
 ON = IntermittentDemand(customer = "ON", rate = 0.3, mean = 1000, stdev = 100, fresh=12, fcbias = 0) #12 weeks fresh = 90 days
 SK = IntermittentDemand(customer = "SK", rate = 1, mean = 50, stdev = 10, fresh=50, fcbias = 0) #12 weeks fresh = 90 days
-MB = IntermittentDemand(customer = "MB", rate = 1, mean = 50, stdev = 10, fresh=50, fcbias = 0) #12 weeks fresh = 90 days
 
-
+#append to list
 IntDemand_list = []
 IntDemand_list.append(ON)
 IntDemand_list.append(SK)
-IntDemand_list.append(MB)
+
+#generate demand for 1 year
+ON50 = ON.generate(sim_length, seed=3)
+SK50 = SK.generate(sim_length, seed=4)
+
+AD = AggregateDemand()
+AD.add(ON50)
+AD.add(SK50)
+
 
 ss = get_safetystock_1(IntDemand_list, leadtime=4, service_level=0.95)
 
@@ -22,13 +31,6 @@ ss2 = get_safetystock_2(IntDemand_list, leadtime=4, service_level=0.95)
 #i think we need to do safety stock per freshness requirement, not just total demand,
 #and then reorder if onhand is less than ss for any of the components.
 
-#generate demand for 1 year
-ON50 = ON.generate(10, seed=3)
-SK50 = SK.generate(10, seed=4)
-
-AD = AggregateDemand()
-AD.add(ON50)
-AD.add(SK50)
 
 #this aggregates demand and converts to data frame, with column names = fresh requirement
 print("Aggregate demand:")
@@ -61,11 +63,30 @@ for i in range(horizon):
     sim.advance_time()
 
     #run forecast netting
-    short = forecast_netting(AD, Inv)
+    NettingResult = forecast_netting(AD, Inv)
+    fcn_sales_log = NettingResult["sales_log"]
+    fcn_short = NettingResult["short"]
+    fcn_ending_inv= NettingResult["ending_inv"]
     
-    if short > 0: #order to cover short
-        Inv.replenish(qty=5000, thc=0.3, leadtime=4)     
-    
+
+    #choose replenishment method
+    replen = 3
+    if replen == 1:
+        if replenish_1(fcn_ending_inv, AD, ss):
+            Inv.replenish(qty=1000, thc=0.3, leadtime=4) 
+    elif replen == 2:
+        if replenish_2(fcn_ending_inv, AD, ss2):
+            Inv.replenish(qty=5000, thc=0.3, leadtime=4)
+    elif replen == 3:
+        ReplenResult = replenish_0(fcn_ending_inv, AD, 6)
+        reorder = ReplenResult["reorder"]
+        qty = ReplenResult["qty"]
+        if reorder:
+            min_qty = 1000
+            reorderqty = max(qty, min_qty)
+            Inv.replenish(qty=reorderqty, thc=0.3, leadtime=4)
+
+
     for dcomp in AD.components:
         f = dcomp["fresh"]
         dmd = dcomp["demand"]

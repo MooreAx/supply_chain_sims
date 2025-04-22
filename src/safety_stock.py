@@ -39,11 +39,11 @@ def get_safetystock_2(intdmdlist, leadtime, service_level):
     ss_by_fresh = {} #dict for storing results
 
     for fresh, components in freshgroups.items(): #freshgrop.items() returns a list of tuples: [(fresh, [list of components])]
-        #calculate total variance and mean for this freshness group
+        #calculate safetystock for this freshness group
         ss = get_safetystock_1(components, leadtime, service_level)
 
         ss_by_fresh[fresh] = ss
         print(f"Safety stock for freshness {fresh} = {ss}")
-
+        print(ss_by_fresh)
     return ss_by_fresh
 
