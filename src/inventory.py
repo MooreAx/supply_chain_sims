@@ -108,7 +108,9 @@ class Inventory:
         print(f"Lots produced =  {max(lot.id for lot in self.lots)}")
         print(f"Units produced = {sum(lot.size for lot in self.lots)}")
         print(f"Units sold =     {sum(lot.qtysold for lot in self.lots)}")
-        print(f"E&O fraction =   {round((sum(lot.qtyavailable for lot in self.lots if lot.age > 50))/(sum(lot.size for lot in self.lots)),3)}")
+        eofrac = round((sum(lot.qtyavailable for lot in self.lots if lot.age > 50))/(sum(lot.size for lot in self.lots)),3)
+        print(f"E&O fraction =   {eofrac}")
+        return eofrac
 
     def __repr__(self):
         return f"Inventory(lots={self.lots})"
